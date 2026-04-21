@@ -51,45 +51,21 @@ The build system supports the following configuration parameters:
   - cerberis_xgr: Available for ETSI 014
   - qukaydee: Available for ETSI 014
 
-### Environment Variables Configuration
+### Cerberis XGR Configuration
 
 When using the QKD ETSI 014 backend, the following environment variables must be set:
 
-#### Recommended (New Variables)
+- `QKD_CERT_PATH`: Path to the public certificate
+- `QKD_KEY_PATH`: Path to the private key
+- `QKD_CA_CERT_PATH`: Path to the CA certificate
+
+Example:
 
 ```bash
-# Your node's information
-export QKD_MY_KME_HOSTNAME="https://my-kme.example.com"
-export QKD_MY_SAE_ID="my-sae-identifier"
-export QKD_MY_CERT_PATH="/path/to/my/cert.pem"
-export QKD_MY_KEY_PATH="/path/to/my/key.pem"
-export QKD_MY_CA_CERT_PATH="/path/to/my/ca.pem"
-
-# Peer's information
-export QKD_PEER_SAE_ID="peer-sae-identifier"
+export QKD_CERT_PATH=/path/to/cert.pem
+export QKD_KEY_PATH=/path/to/key.pem
+export QKD_CA_CERT_PATH=/path/to/ca.pem
 ```
-
-#### Deprecated (Backward Compatible)
-
-The following variables are deprecated but still supported for backward compatibility:
-
-```bash
-# Old naming scheme (deprecated)
-export QKD_MASTER_KME_HOSTNAME="https://kme.example.com"
-export QKD_SLAVE_KME_HOSTNAME="https://kme.example.com"
-export QKD_MASTER_SAE="master-sae-id"
-export QKD_SLAVE_SAE="slave-sae-id"
-export QKD_MASTER_CERT_PATH="/path/to/cert.pem"
-export QKD_MASTER_KEY_PATH="/path/to/key.pem"
-export QKD_MASTER_CA_CERT_PATH="/path/to/ca.pem"
-export QKD_SLAVE_CERT_PATH="/path/to/cert.pem"
-export QKD_SLAVE_KEY_PATH="/path/to/key.pem"
-export QKD_SLAVE_CA_CERT_PATH="/path/to/ca.pem"
-```
-
-**Note:** Using deprecated variables will display a warning message. Please migrate to the new `QKD_MY_*` and `QKD_PEER_*` variables.
-
-For detailed migration instructions, see [docs/ENVIRONMENT-VARIABLES-REFACTORING.md](docs/ENVIRONMENT-VARIABLES-REFACTORING.md).
 
 ### Other Options
 
@@ -120,28 +96,6 @@ make
 
 When testing the ETSI014 API with the `cerberis_xgr` backend, the following environment variables must be set:
 
-#### Using New Variables (Recommended)
-
-```bash
-# Node A configuration
-export QKD_MY_KME_HOSTNAME="https://kme-a.example.com"
-export QKD_MY_SAE_ID="sae-a"
-export QKD_MY_CERT_PATH="/path/to/node-a-cert.pem"
-export QKD_MY_KEY_PATH="/path/to/node-a-key.pem"
-export QKD_MY_CA_CERT_PATH="/path/to/ca.pem"
-export QKD_PEER_SAE_ID="sae-b"
-
-# Node B configuration
-export QKD_MY_KME_HOSTNAME="https://kme-b.example.com"
-export QKD_MY_SAE_ID="sae-b"
-export QKD_MY_CERT_PATH="/path/to/node-b-cert.pem"
-export QKD_MY_KEY_PATH="/path/to/node-b-key.pem"
-export QKD_MY_CA_CERT_PATH="/path/to/ca.pem"
-export QKD_PEER_SAE_ID="sae-a"
-```
-
-#### Using Old Variables (Deprecated)
-
 ```bash
 # Certificate configuration
 export QKD_MASTER_CERT_PATH=/path/to/cert.crt
@@ -158,8 +112,6 @@ export QKD_SLAVE_KME_HOSTNAME="https://slave-kme-hostname"
 export QKD_MASTER_SAE="master-sae-id"
 export QKD_SLAVE_SAE="slave-sae-id"
 ```
-
-**Note:** The old variable names are deprecated. Please use the new `QKD_MY_*` and `QKD_PEER_*` naming scheme.
 
 The script `scripts/env_var.sh` can help to set the enviroment variables:
 

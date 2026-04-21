@@ -35,115 +35,46 @@ struct MemoryStruct {
     size_t size;
 };
 
-/* This file includes AI-generated code - Review and modify as needed */
-
-/**
- * Helper function to get environment variable with fallback support
- *
- * @param new_var Primary variable name (new style)
- * @param old_var1 First fallback variable (old style)
- * @param old_var2 Second fallback variable (old style)
- * @param used_deprecated Output flag indicating if deprecated variable was used
- * @return Variable value or NULL if not found
+/* New certificate initialization function.
+ * role: 1 for initiator (master certs), 0 for responder (slave certs)
  */
-static const char* get_env_with_fallback(
-    const char *new_var,
-    const char *old_var1,
-    const char *old_var2,
-    bool *used_deprecated
-) {
-    const char *value = getenv(new_var);
-    if (value) {
-        return value;
-    }
-    
-    // Try first old variable
-    value = getenv(old_var1);
-    if (value) {
-        *used_deprecated = true;
-        return value;
-    }
-    
-    // Try second old variable
-    if (old_var2) {
-        value = getenv(old_var2);
-        if (value) {
-            *used_deprecated = true;
-            return value;
+int init_cert_config(int role, etsi014_cert_config_t *config) {
+    if (role == 1) {  // initiator: load master certificates
+        const char *cert_path = getenv("QKD_MASTER_CERT_PATH");
+        const char *key_path  = getenv("QKD_MASTER_KEY_PATH");
+        const char *ca_cert_path = getenv("QKD_MASTER_CA_CERT_PATH");
+
+        if (!cert_path || !key_path || !ca_cert_path) {
+            QKD_DBG_ERR("Required MASTER certificate environment variables not set");
+            return QKD_STATUS_BAD_REQUEST;
         }
-    }
-    
-    return NULL;
-}
+        config->cert_path = cert_path;
+        config->key_path  = key_path;
+        config->ca_cert_path = ca_cert_path;
 
-/**
- * Print deprecation warning once per process
- */
-static void print_deprecation_warning_once(void) {
-    static bool warning_printed = false;
-    if (!warning_printed) {
-        fprintf(stderr,
-            "WARNING: QKD_MASTER_*/QKD_SLAVE_* environment variables are deprecated.\n"
-            "         Please migrate to QKD_MY_* variables.\n"
-            "         See documentation for migration guide.\n");
-        warning_printed = true;
-    }
-}
+        QKD_DBG_INFO("Master certificate configuration initialized:");
+        QKD_DBG_INFO("  Cert path: %s", config->cert_path);
+        QKD_DBG_INFO("  Key path: %s", config->key_path);
+        QKD_DBG_INFO("  CA cert path: %s", config->ca_cert_path);
+    } else {  // responder: load slave certificates
+        const char *cert_path = getenv("QKD_SLAVE_CERT_PATH");
+        const char *key_path  = getenv("QKD_SLAVE_KEY_PATH");
+        const char *ca_cert_path = getenv("QKD_SLAVE_CA_CERT_PATH");
 
-/**
- * Initialize certificate configuration with new MY_* variables
- * Falls back to old MASTER_*/SLAVE_* variables for backward compatibility
- *
- * @param config Certificate configuration structure to populate
- * @return QKD_STATUS_OK on success, QKD_STATUS_BAD_REQUEST on failure
- */
-int init_cert_config(etsi014_cert_config_t *config) {
-    bool used_deprecated = false;
-    
-    // Load certificate paths with fallback
-    const char *cert_path = get_env_with_fallback(
-        "QKD_MY_CERT_PATH",
-        "QKD_MASTER_CERT_PATH",
-        "QKD_SLAVE_CERT_PATH",
-        &used_deprecated
-    );
-    
-    const char *key_path = get_env_with_fallback(
-        "QKD_MY_KEY_PATH",
-        "QKD_MASTER_KEY_PATH",
-        "QKD_SLAVE_KEY_PATH",
-        &used_deprecated
-    );
-    
-    const char *ca_cert_path = get_env_with_fallback(
-        "QKD_MY_CA_CERT_PATH",
-        "QKD_MASTER_CA_CERT_PATH",
-        "QKD_SLAVE_CA_CERT_PATH",
-        &used_deprecated
-    );
-    
-    // Print deprecation warning if old variables were used
-    if (used_deprecated) {
-        print_deprecation_warning_once();
+        if (!cert_path || !key_path || !ca_cert_path) {
+            QKD_DBG_ERR("Required SLAVE certificate environment variables not set");
+            return QKD_STATUS_BAD_REQUEST;
+        }
+        QKD_DBG_INFO("QKD_SLAVE_CERT_PATH: %s", cert_path);
+        QKD_DBG_INFO("QKD_SLAVE_KEY_PATH: %s", key_path);
+        QKD_DBG_INFO("QKD_SLAVE_CA_CERT_PATH: %s", ca_cert_path);
+
+        config->cert_path = cert_path;
+        config->key_path  = key_path;
+        config->ca_cert_path = ca_cert_path;
+
+        QKD_DBG_INFO("Slave certificate configuration initialized.");
     }
-    
-    // Validate all required paths are present
-    if (!cert_path || !key_path || !ca_cert_path) {
-        QKD_DBG_ERR("Required certificate environment variables not set");
-        QKD_DBG_ERR("Please set: QKD_MY_CERT_PATH, QKD_MY_KEY_PATH, QKD_MY_CA_CERT_PATH");
-        return QKD_STATUS_BAD_REQUEST;
-    }
-    
-    // Store paths in config
-    config->cert_path = cert_path;
-    config->key_path = key_path;
-    config->ca_cert_path = ca_cert_path;
-    
-    QKD_DBG_INFO("Certificate configuration initialized:");
-    QKD_DBG_INFO("  Cert path: %s", config->cert_path);
-    QKD_DBG_INFO("  Key path: %s", config->key_path);
-    QKD_DBG_INFO("  CA cert path: %s", config->ca_cert_path);
-    
     return QKD_STATUS_OK;
 }
 
@@ -456,7 +387,7 @@ static uint32_t get_status(const char *kme_hostname,
 
     etsi014_cert_config_t cert_config;
 
-    if (init_cert_config(&cert_config) != QKD_STATUS_OK)
+    if (init_cert_config(1, &cert_config) != QKD_STATUS_OK)
         return QKD_STATUS_BAD_REQUEST;
 
     // Request to KME node
@@ -520,7 +451,7 @@ static uint32_t get_key(const char *kme_hostname,
     char *response;
     long http_code;
     etsi014_cert_config_t cert_config;
-    if (init_cert_config(&cert_config) != QKD_STATUS_OK)
+    if (init_cert_config(1, &cert_config) != QKD_STATUS_OK)
         return QKD_STATUS_BAD_REQUEST;
 
     response = handle_request_https(url, NULL, &http_code, &cert_config);
@@ -545,7 +476,7 @@ static uint32_t get_key_with_ids(const char *kme_hostname,
     char *response;
     long http_code;
     etsi014_cert_config_t cert_config;
-    if (init_cert_config(&cert_config) != QKD_STATUS_OK) {
+    if (init_cert_config(0, &cert_config) != QKD_STATUS_OK) {
         free(post_data);
         return QKD_STATUS_BAD_REQUEST;
     }
