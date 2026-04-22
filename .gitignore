@@ -1,3 +1,5 @@
 build/
 scripts/code_format.sh
 certs/
+# Work directory (documentation and temporary files)
+work/
